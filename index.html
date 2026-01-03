@@ -406,7 +406,6 @@
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
             
-            // ADMIN KONTROLÜ (İbrahim ve Abdullah Admin)
             if(username === "İbrahim Developer" || username === "Admin" || username === "Abdullah") {
                 document.getElementById('admin-btn').style.display = 'block';
             }
@@ -482,29 +481,39 @@
         window.openUpgrade = () => { playClickSound(); document.getElementById('upgrade-modal').style.display = 'flex'; };
         window.closeUpgrade = () => { playClickSound(); document.getElementById('upgrade-modal').style.display = 'none'; };
 
-        // LEADERBOARD FONKSİYONLARI
+        // LEADERBOARD FONKSİYONLARI - DÜZELTİLDİ
         window.openLeaderboard = () => {
             playClickSound();
             document.getElementById('leaderboard-modal').style.display = 'flex';
             const listContainer = document.getElementById('leaderboard-list');
             listContainer.innerHTML = "Yükleniyor...";
 
+            // Score bazlı sorgu
             const leadQuery = query(ref(db, DB_PREFIX), orderByChild('score'), limitToLast(10));
+            
             get(leadQuery).then(snap => {
                 listContainer.innerHTML = "";
                 const data = [];
                 snap.forEach(child => {
-                    data.push({ name: child.key, score: child.val().score });
+                    data.push({ name: child.key, score: child.val().score || 0 });
                 });
-                data.reverse().forEach((user, index) => {
+
+                // Firebase küçükten büyüğe getirdiği için manuel olarak büyükten küçüğe sıralıyoruz
+                data.sort((a, b) => b.score - a.score);
+
+                data.forEach((user, index) => {
                     const item = document.createElement('div');
                     item.className = 'leader-item';
+                    // İlk 3 kişiye özel renkler (CSS'den gelir)
                     item.innerHTML = `
                         <span><b>#${index + 1}</b> ${user.name}</span>
                         <span style="color:#00f260;">$${user.score.toLocaleString()}</span>
                     `;
                     listContainer.appendChild(item);
                 });
+            }).catch(err => {
+                listContainer.innerHTML = "Hata: Firebase kurallarından indexOn: score eklemelisiniz.";
+                console.error(err);
             });
         };
         window.closeLeaderboard = () => { playClickSound(); document.getElementById('leaderboard-modal').style.display = 'none'; };
@@ -700,7 +709,6 @@
             if(u && p) { document.getElementById('username-inp').value = u; document.getElementById('password-inp').value = p; window.handleLogin(); }
         };
 
-        // ADMIN PANEL FONKSİYONLARI
         window.openAdmin = () => { playClickSound(); document.getElementById('admin-modal').style.display = 'flex'; };
         window.closeAdmin = () => { playClickSound(); document.getElementById('admin-modal').style.display = 'none'; };
         window.sendServerMessage = () => {
